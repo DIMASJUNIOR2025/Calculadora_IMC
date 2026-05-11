@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161922;
+      --card:     #1c2030;
+      --border:   #272d3d;
+      --accent:   #4f8ef7;
+      --accent2:  #7dd3fc;
+      --ok:       #34d399;
+      --warn:     #fbbf24;
+      --danger:   #f87171;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --label:    #94a3b8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    /* ── Ambient glow ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 15% 10%, rgba(79,142,247,.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 85% 90%, rgba(125,211,252,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeDown .6s ease both;
+    }
+    header .eyebrow {
+      font-size: .72rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--text) 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 300;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 36px 32px;
+      animation: fadeUp .7s ease both;
+    }
+
+    /* ── Fieldset sections ── */
+    .section-title {
+      font-size: .68rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Field ── */
+    .field { margin-bottom: 22px; }
+    .field label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--label);
+      margin-bottom: 8px;
+    }
+    .field input[type="text"],
+    .field input[type="number"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,142,247,.15);
+    }
+    .field input::placeholder { color: var(--muted); font-style: italic; font-size: .88rem; }
+
+    /* Slider */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .slider-wrap input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--border);
+      cursor: pointer;
+      outline: none;
+    }
+    .slider-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 6px rgba(79,142,247,.5);
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .slider-wrap input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .slider-val {
+      min-width: 40px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--accent2);
+    }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+    /* ── Button ── */
+    .btn-calcular {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #3b78f0, #5aa3fa);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(79,142,247,.3);
+    }
+    .btn-calcular:hover  { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,142,247,.45); }
+    .btn-calcular:active { transform: translateY(0); }
+
+    /* ── Results ── */
+    #resultados {
+      display: none;
+      width: 100%;
+      max-width: 520px;
+      margin-top: 20px;
+      animation: fadeUp .5s ease both;
+    }
+
+    .greeting {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.45rem;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .greeting em { font-style: italic; color: var(--accent2); }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .result-chip::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      border-radius: 14px 0 0 14px;
+    }
+    .result-chip.ok::after    { background: var(--ok); }
+    .result-chip.warn::after  { background: var(--warn); }
+    .result-chip.danger::after { background: var(--danger); }
+    .result-chip.neutral::after { background: var(--accent); }
+
+    .result-chip .chip-label {
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .result-chip .chip-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .result-chip .chip-sub {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .imc-bar-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-top: 12px;
+    }
+    .imc-bar-label { font-size: .75rem; color: var(--muted); margin-bottom: 10px; }
+    .imc-bar-track {
+      position: relative;
+      height: 8px;
+      border-radius: 8px;
+      background: linear-gradient(to right,
+        #60a5fa 0%,        /* abaixo */
+        #34d399 20%,       /* normal */
+        #fbbf24 50%,       /* sobrepeso */
+        #f87171 75%,       /* ob I */
+        #ef4444 90%,       /* ob II */
+        #b91c1c 100%       /* ob III */
+      );
+      margin-bottom: 12px;
+    }
+    .imc-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 3px var(--accent);
+      transition: left .8s cubic-bezier(.34,1.56,.64,1);
+    }
+    .imc-classes {
+      display: flex;
+      justify-content: space-between;
+      font-size: .6rem;
+      color: var(--muted);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 420px) {
+      .card { padding: 24px 18px; }
+      .results-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="eyebrow">Análise de Saúde</div>
+    <h1>Calculadora de Perfil</h1>
+    <p>Preencha os dados abaixo para obter sua análise completa.</p>
+  </header>
+
+  <!-- FORMULÁRIO -->
+  <div class="card">
+    <div class="section-title">Dados Pessoais</div>
+
+    <div class="field">
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" placeholder="Como você se chama?" />
+    </div>
+
+    <div class="field">
+      <label for="idade">Idade — <span id="idadeDisplay">25</span> anos</label>
+      <div class="slider-wrap">
+        <input type="range" id="idade" min="0" max="120" value="25"
+               oninput="document.getElementById('idadeDisplay').textContent = this.value" />
+        <span class="slider-val" id="idadeVal">25</span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+    <div class="section-title">Medidas Corporais</div>
+
+    <div class="field">
+      <label for="peso">Peso (kg)</label>
+      <input type="number" id="peso" placeholder="Ex: 70.5" step="0.1" min="1" max="300" />
+    </div>
+
+    <div class="field">
+      <label for="altura">Altura (m)</label>
+      <input type="number" id="altura" placeholder="Ex: 1.75" step="0.01" min="0.5" max="2.5" />
+    </div>
+
+    <button class="btn-calcular" onclick="calcular()">Calcular Resultados</button>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div id="resultados">
+    <div class="card" style="margin-top:0;">
+
+      <p class="greeting" id="saudacao"></p>
+
+      <div class="results-grid" id="chipsGrid"></div>
+
+      <!-- Barra IMC -->
+      <div class="imc-bar-wrap" id="imcBarWrap" style="display:none;">
+        <div class="imc-bar-label">Índice de Massa Corporal (IMC)</div>
+        <div class="imc-bar-track">
+          <div class="imc-marker" id="imcMarker" style="left:0%"></div>
+        </div>
+        <div class="imc-classes">
+          <span>Baixo peso</span>
+          <span>Normal</span>
+          <span>Sobrepeso</span>
+          <span>Ob. I</span>
+          <span>Ob. II</span>
+          <span>Ob. III</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Sync slider label e valor lado
+    const idadeSlider = document.getElementById('idade');
+    const idadeDisplay = document.getElementById('idadeDisplay');
+    const idadeVal = document.getElementById('idadeVal');
+    idadeSlider.oninput = () => {
+      idadeDisplay.textContent = idadeSlider.value;
+      idadeVal.textContent = idadeSlider.value;
+    };
+
+    function chip(label, value, sub, tone) {
+      return `
+        <div class="result-chip ${tone}">
+          <div class="chip-label">${label}</div>
+          <div class="chip-value">${value}</div>
+          ${sub ? `<div class="chip-sub">${sub}</div>` : ''}
+        </div>`;
+    }
+
+    function calcular() {
+      const nome   = document.getElementById('nome').value.trim() || 'Usuário';
+      const idade  = parseInt(idadeSlider.value);
+      const pesoRaw = document.getElementById('peso').value;
+      const altRaw  = document.getElementById('altura').value;
+
+      const peso   = parseFloat(pesoRaw);
+      const altura = parseFloat(altRaw);
+
+      if (isNaN(peso) || peso <= 0 || isNaN(altura) || altura <= 0) {
+        alert('Por favor, informe peso e altura válidos.');
+        return;
+      }
+
+      /* Maioridade */
+      const maioridade   = idade >= 18;
+      const labelMaior   = maioridade ? 'Maior de idade' : 'Menor de idade';
+      const subMaior     = maioridade ? 'Pode votar' : 'Não pode votar';
+      const toneMaior    = maioridade ? 'ok' : 'warn';
+
+      /* Altura */
+      let catAltura, toneAltura;
+      if (altura <= 1.65)       { catAltura = 'Baixo(a)';    toneAltura = 'warn'; }
+      else if (altura <= 1.79)  { catAltura = 'Mediano(a)';  toneAltura = 'neutral'; }
+      else                       { catAltura = 'Alto(a)';     toneAltura = 'ok'; }
+
+      /* IMC */
+      const imc = peso / (altura * altura);
+      let classeIMC, toneIMC, imcPct;
+
+      if      (imc < 18.5) { classeIMC = 'Abaixo do peso';        toneIMC = 'neutral'; imcPct = (imc / 40) * 100 * 0.20; }
+      else if (imc < 25)   { classeIMC = 'Peso normal';           toneIMC = 'ok';      imcPct = 20 + ((imc - 18.5) / 6.5) * 30; }
+      else if (imc < 30)   { classeIMC = 'Sobrepeso';             toneIMC = 'warn';    imcPct = 50 + ((imc - 25) / 5) * 25; }
+      else if (imc < 35)   { classeIMC = 'Obesidade Grau I';      toneIMC = 'danger';  imcPct = 75 + ((imc - 30) / 5) * 10; }
+      else if (imc < 40)   { classeIMC = 'Obesidade Grau II';     toneIMC = 'danger';  imcPct = 85 + ((imc - 35) / 5) * 8; }
+      else                  { classeIMC = 'Obesidade Grau III';    toneIMC = 'danger';  imcPct = 95; }
+
+      imcPct = Math.min(Math.max(imcPct, 2), 97);
+
+      /* Render */
+      document.getElementById('saudacao').innerHTML =
+        `Olá, <em>${nome}</em>! Aqui está sua análise.`;
+
+      document.getElementById('chipsGrid').innerHTML =
+        chip('Idade', `${idade} anos`, labelMaior + ' · ' + subMaior, toneMaior) +
+        chip('Peso', `${peso.toFixed(1)} kg`, '', 'neutral') +
+        chip('Altura', `${altura.toFixed(2)} m`, catAltura, toneAltura) +
+        chip('IMC', imc.toFixed(2), classeIMC, toneIMC);
+
+      document.getElementById('imcBarWrap').style.display = 'block';
+
+      // Animar marcador com delay
+      setTimeout(() => {
+        document.getElementById('imcMarker').style.left = imcPct + '%';
+      }, 100);
+
+      const res = document.getElementById('resultados');
+      res.style.display = 'block';
+      res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+</html>
